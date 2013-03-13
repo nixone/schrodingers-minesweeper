@@ -1,4 +1,5 @@
-schrodingers-minesweeper
-========================
+# Schrödinger's Minesweeper
 
-Minesweeper with mines that disappear :)
+Just a little project for fun, remake of the traditional Minesweeper game with a little tweak: Mines that disappear :)
+
+## Enjoy :)
