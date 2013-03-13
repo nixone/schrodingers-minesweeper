@@ -14,7 +14,7 @@ Enjoy :)
 
 ### Authors
 
-Originaly created by [nixone](nixone.sk) at [HackCraft](hackcraft.sk).
+Originaly created by [nixone](http://nixone.sk) at [HackCraft](http://hackcraft.sk).
 
 ### License
 
