@@ -17,6 +17,7 @@ public class Game {
 		}
 		
 		private Result(int minesDiscovered, long timeInMiliseconds) {
+			failed = false;
 			minePerSecond = ((double)mines) / (timeInMiliseconds/1000);
 		}
 		
@@ -42,7 +43,7 @@ public class Game {
 				try {
 					Thread.sleep(time);
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					return;
 				}
 				if(random.nextBoolean()) {
 					System.out.println("Cat died!");
@@ -75,16 +76,10 @@ public class Game {
 			isMarked = false;
 		}
 		
-		/**
-		 * 
-		 * @return true if empty, false if exploded
-		 */
-		public boolean discover() {
+		public void discover() {
 			if(isDiscovered)
 				throw new IllegalStateException("Field is discovered");
 			isDiscovered = true;
-			
-			return !hasMine;
 		}
 	}
 	
@@ -128,13 +123,23 @@ public class Game {
 	private int columns, rows, mines;
 	private Field [] fields = null;
 	private float difficulty;
-	private boolean finished = false;
+	private Result result;
 	private int mineCount = 0;
+	private SchrodingerThread schrodingerThread = new SchrodingerThread();
 	
 	public Game(int columns, int rows, float difficulty) {
 		this.columns = columns;
 		this.rows = rows;
 		this.difficulty = difficulty;
+		
+		UPDATED.addListener(new UpdatedListener() {
+			@Override
+			public void onGameUpdate(Game game) {
+				if(game.isFinished()) {
+					game.GAME_END.invoke(game.result);
+				}
+			}
+		});
 	}
 	
 	private void createAndStart(int startColumn, int startRow) {
@@ -153,44 +158,43 @@ public class Game {
 			}
 		}
 		
-		new SchrodingerThread().start();
+		schrodingerThread.start();
 	}
 	
-	public synchronized boolean discover(int column, int row) {
-		if(finished)
+	public synchronized void discover(int column, int row) {
+		if(isFinished())
 			throw new IllegalStateException("Cannot discover if finished");
 		
 		if(fields == null)
 			createAndStart(column, row);
 		
-		boolean result = fields[row*columns + column].discover();
+		fields[row*columns + column].discover();
 		
-		if(result != true) {
-			finished = true;
-		} else {
-			if(getSurroundingMines(column, row) == 0) {
-				for(int subRow = row - 1; subRow <= row + 1; subRow++) {
-					if(subRow >= rows || subRow < 0)
+		checkIfFinished();
+
+		UPDATED.invoke(this);
+		
+		if(isFinished()) {
+			return;
+		}
+		
+		if(getSurroundingMines(column, row) == 0) {
+			for(int subRow = row - 1; subRow <= row + 1; subRow++) {
+				if(subRow >= rows || subRow < 0)
+					continue;
+				for(int subColumn = column - 1; subColumn <= column + 1; subColumn++) {
+					
+					if(subColumn >= columns || subColumn < 0)
 						continue;
-					for(int subColumn = column - 1; subColumn <= column + 1; subColumn++) {
-						
-						if(subColumn >= columns || subColumn < 0)
-							continue;
-						if(row == subRow && column == subColumn)
-							continue;						
-						
-						if(!fields[subRow*columns + subColumn].isDiscovered) {
-							discover(subColumn, subRow);
-						}
+					if(row == subRow && column == subColumn)
+						continue;						
+					
+					if(!fields[subRow*columns + subColumn].isDiscovered) {
+						discover(subColumn, subRow);
 					}
 				}
 			}
-			checkIfFinished();
 		}
-		
-		UPDATED.invoke(this);
-
-		return result;
 	}
 	
 	public synchronized void mark(int column, int row) {
@@ -217,11 +221,15 @@ public class Game {
 	}
 	
 	private void checkIfFinished() {
-		
-		
-		///// TODO Dokoncit 
-		
-		
+		for(int row = 0; row < rows; row++) {
+			for(int column = 0; column < columns; column++) {
+				Field field = fields[row*columns + column];
+				if(field.hasMine && field.isDiscovered) {
+					result = new Result();
+					return;
+				}
+			}
+		}
 		
 		for(int row = 0; row < rows; row++) {
 			for(int column = 0; column < columns; column++) {
@@ -231,7 +239,8 @@ public class Game {
 				}
 			}
 		}
-		finished = true;
+		
+		result = new Result(1000, 500);
 	}
 	
 	public int getSurroundingMines(int fieldColumn, int fieldRow) {
@@ -266,7 +275,7 @@ public class Game {
 	}
 	
 	public boolean isFinished() {
-		return finished;
+		return result != null;
 	}
 	
 	@Override
@@ -301,7 +310,7 @@ public class Game {
 			output += "\n";
 		}
 		
-		if(finished)
+		if(isFinished())
 			output += "This game is already finished!";
 		
 		return output;
@@ -330,5 +339,12 @@ public class Game {
 		f.hasMine = false;
 		
 		UPDATED.invoke(this);
+	}
+	
+	public synchronized void stop() {
+		if(isFinished()) {
+			return;
+		}
+		schrodingerThread.interrupt();
 	}
 }

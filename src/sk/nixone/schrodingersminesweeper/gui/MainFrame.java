@@ -1,13 +1,11 @@
 package sk.nixone.schrodingersminesweeper.gui;
 
 import java.awt.Container;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -16,10 +14,12 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 import sk.nixone.schrodingersminesweeper.Game;
+import sk.nixone.schrodingersminesweeper.Game.GameEndedListener;
+import sk.nixone.schrodingersminesweeper.Game.Result;
 
 /**
  *
- * @author olesnanik2
+ * @author nixone
  */
 public class MainFrame extends JFrame {
     static public void main(String [] arguments) {
@@ -40,6 +40,11 @@ public class MainFrame extends JFrame {
 	);
 	
 	private JButton newGameButton = new JButton("Start new game");
+	
+	private JComboBox<Float> difficultySelector = new JComboBox<Float>();
+	
+	private Game game = null;
+	private GameFrame gameFrame = null;
 	
 	public MainFrame() {
 		super("Schrodingers Minesweeper main menu");
@@ -133,36 +138,37 @@ public class MainFrame extends JFrame {
 	}
 	
 	private void createNewGame() {
-		GameFrame gameFrame = new GameFrame(new Game(20, 20, 0.125f));
+		game = new Game(20, 20, 0.125f);
+		
+		gameFrame = new GameFrame(game);
 		gameFrame.setLocation(this.getLocation());
 		
-		gameFrame.addWindowListener(new WindowListener() {
+		game.GAME_END.addListener(new GameEndedListener() {
 			@Override
-			public void windowOpened(WindowEvent e) {}
-
-			@Override
-			public void windowClosing(WindowEvent e) {
-				MainFrame.this.setVisible(true);
-				MainFrame.this.requestFocus();
+			public void onGameEnded(Result result) {
+				endGame();
+				
+				ResultDialog resultDialog = new ResultDialog(MainFrame.this, result);
+				resultDialog.setVisible(true);
+				resultDialog.requestFocus();
 			}
-
-			@Override
-			public void windowClosed(WindowEvent e) {}
-
-			@Override
-			public void windowIconified(WindowEvent e) {}
-
-			@Override
-			public void windowDeiconified(WindowEvent e) {}
-
-			@Override
-			public void windowActivated(WindowEvent e) {}
-
-			@Override
-			public void windowDeactivated(WindowEvent e) {}
 		});
 		
 		this.setVisible(false);
 		gameFrame.setVisible(true);
+	}
+	
+	public void endGame() {
+		if(game == null) {
+			throw new IllegalStateException("Cannot end game. No game playing!");
+		}
+		
+		gameFrame.dispose();
+		gameFrame = null;
+		game.stop();
+		game = null;
+		
+		this.setVisible(true);
+		this.requestFocus();
 	}
 }

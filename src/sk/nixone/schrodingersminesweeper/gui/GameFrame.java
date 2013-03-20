@@ -30,6 +30,5 @@ public class GameFrame extends JFrame {
 		setResizable(false);
 		
 		pack();
-		
 	}
 }
