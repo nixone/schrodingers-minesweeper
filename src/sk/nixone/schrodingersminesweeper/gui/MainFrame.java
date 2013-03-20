@@ -5,7 +5,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -40,8 +39,6 @@ public class MainFrame extends JFrame {
 	);
 	
 	private JButton newGameButton = new JButton("Start new game");
-	
-	private JComboBox<Float> difficultySelector = new JComboBox<Float>();
 	
 	private Game game = null;
 	private GameFrame gameFrame = null;
@@ -138,7 +135,7 @@ public class MainFrame extends JFrame {
 	}
 	
 	private void createNewGame() {
-		game = new Game(20, 20, 0.125f);
+		game = new Game(20, 20, 0.0125f);
 		
 		gameFrame = new GameFrame(game);
 		gameFrame.setLocation(this.getLocation());

@@ -202,6 +202,8 @@ public class Game {
 			throw new IllegalStateException("You cannot be sure to mark a field because it is not generated yet");
 		fields[row*columns + column].mark();
 		
+		checkIfFinished();
+		
 		UPDATED.invoke(this);
 	}
 	
@@ -209,6 +211,8 @@ public class Game {
 		if(fields == null)
 			throw new IllegalStateException("Field is not marked");
 		fields[row*columns + column].unmark();
+		
+		checkIfFinished();
 		
 		UPDATED.invoke(this);
 	}
@@ -234,7 +238,8 @@ public class Game {
 		for(int row = 0; row < rows; row++) {
 			for(int column = 0; column < columns; column++) {
 				Field field = fields[row*columns + column];
-				if(field.hasMine && !field.isMarked) {
+				// if there is an unmarked mine, or there is unproperly marked field that has no mine or it is not discovered at all
+				if((field.hasMine && !field.isMarked) || (!field.hasMine && field.isMarked) || (!field.isDiscovered && !field.isMarked)) {
 					return;
 				}
 			}

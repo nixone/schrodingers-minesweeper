@@ -43,6 +43,9 @@ public class ResultDialog extends JDialog {
 		GroupLayout layout = new GroupLayout(pane);
 		pane.setLayout(layout);
 		
+		layout.setAutoCreateContainerGaps(true);
+		layout.setAutoCreateGaps(true);
+		
 		layout.setVerticalGroup(layout.createSequentialGroup().addComponent(resultLabel));
 		layout.setHorizontalGroup(layout.createParallelGroup().addComponent(resultLabel));
 	}
